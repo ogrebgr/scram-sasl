@@ -16,7 +16,6 @@ import java.util.UUID;
 
 
 abstract public class AbstractScramSaslClientProcessor implements ScramSaslClientProcessor {
-    private static final byte[] INT_1 = new byte[]{0, 0, 0, 1};
     private static final String GS2_HEADER = "n,,";
     private static final Charset ASCII = Charset.forName("ASCII");
 
@@ -25,8 +24,7 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
     private final Sender mSender;
     private final String mDigestName;
     private final String mHmacName;
-    private final String mClientNonce = UUID.randomUUID().toString();
-    private String mUsername;
+    private final String mClientNonce;
     private String mPassword;
     private State mState = State.INITIAL;
 
@@ -34,18 +32,24 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
     private volatile boolean mAborted = false;
 
     private String mClientFirstMessageBare;
-    private String mServerNonce;
-    private String mSalt;
-    private int mIterations;
-    private byte[] mServerSignature;
 
 
-    public AbstractScramSaslClientProcessor(Listener listener, Sender sender, String digestName, String hmacName) {
+    public AbstractScramSaslClientProcessor(Listener listener,
+                                            Sender sender,
+                                            String digestName,
+                                            String hmacName,
+                                            String clientNonce) {
 
         mListener = listener;
         mSender = sender;
         mDigestName = digestName;
         mHmacName = hmacName;
+        mClientNonce = clientNonce;
+    }
+
+
+    public AbstractScramSaslClientProcessor(Listener listener, Sender sender, String digestName, String hmacName) {
+        this(listener, sender, digestName, hmacName, UUID.randomUUID().toString());
     }
 
 
@@ -106,30 +110,29 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
             return null;
         }
 
-        mServerNonce = nonce;
         if (!parts[1].startsWith("s=")) {
             return null;
         }
-        mSalt = parts[1].substring(2);
+        String salt = parts[1].substring(2);
         if (!parts[2].startsWith("i=")) {
             return null;
         }
         String iterCountString = parts[2].substring(2);
-        mIterations = Integer.parseInt(iterCountString);
-        if (mIterations <= 0) {
+        int iterations = Integer.parseInt(iterCountString);
+        if (iterations <= 0) {
             return null;
         }
 
 
         try {
             byte[] saltedPassword = ScramUtils.generateSaltedPassword(mPassword,
-                    Base64.decode(mSalt),
-                    mIterations,
+                    Base64.decode(salt),
+                    iterations,
                     mHmacName);
 
 
             String clientFinalMessageWithoutProof = "c=" + Base64.encodeBytes(GS2_HEADER.getBytes(ASCII))
-                    + ",r=" + mServerNonce;
+                    + ",r=" + nonce;
 
             String authMessage = mClientFirstMessageBare + "," + message + "," + clientFinalMessageWithoutProof;
 
@@ -142,9 +145,6 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
             for (int i = 0; i < clientProof.length; i++) {
                 clientProof[i] ^= clientSignature[i];
             }
-            byte[] serverKey = ScramUtils.computeHmac(saltedPassword, mHmacName, "Server Key");
-            mServerSignature = ScramUtils.computeHmac(serverKey, mHmacName, authMessage);
-
 
             return clientFinalMessageWithoutProof + ",p=" + Base64.encodeBytes(clientProof);
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
@@ -184,10 +184,9 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
 
     @Override
     public synchronized void start(String username, String password) throws StringPrep.StringPrepError {
-        mUsername = username;
         mPassword = password;
 
-        mClientFirstMessageBare = "n=" + StringPrep.prepAsQueryString(mUsername) + ",r=" + mClientNonce;
+        mClientFirstMessageBare = "n=" + StringPrep.prepAsQueryString(username) + ",r=" + mClientNonce;
         mState = State.CLIENT_FIRST_SENT;
         mSender.sendMessage(GS2_HEADER + mClientFirstMessageBare);
     }
