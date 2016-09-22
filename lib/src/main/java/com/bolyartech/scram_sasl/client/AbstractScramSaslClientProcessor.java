@@ -15,6 +15,11 @@ import java.util.Arrays;
 import java.util.UUID;
 
 
+/**
+ * Provides client side processing of the SCRAM SASL authentication
+ * Skeleton implementation of ScramSaslClientProcessor
+ */
+@SuppressWarnings("WeakerAccess")
 abstract public class AbstractScramSaslClientProcessor implements ScramSaslClientProcessor {
     private static final String GS2_HEADER = "n,,";
     private static final Charset ASCII = Charset.forName("ASCII");
@@ -34,22 +39,55 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
     private String mClientFirstMessageBare;
 
 
-    public AbstractScramSaslClientProcessor(Listener listener,
+    /**
+     * Creates new AbstractScramSaslClientProcessor
+     * @param listener Listener of the client processor (this object)
+     * @param sender Sender used to send messages to the server
+     * @param digestName Digest to be used
+     * @param hmacName HMAC to be used
+     */
+    @SuppressWarnings("SameParameterValue")
+    public AbstractScramSaslClientProcessor(Listener listener, Sender sender, String digestName, String hmacName) {
+        this(listener, sender, digestName, hmacName, UUID.randomUUID().toString());
+    }
+
+
+    /**
+     * Creates new AbstractScramSaslClientProcessor
+     * Intended to be used in unit test (with a predefined clientNonce in order to have repeatability)
+     * @param listener Listener of the client processor (this object)
+     * @param sender Sender used to send messages to the server
+     * @param digestName Digest to be used
+     * @param hmacName HMAC to be used
+     * @param clientNonce Client nonce
+     */
+    AbstractScramSaslClientProcessor(Listener listener,
                                             Sender sender,
                                             String digestName,
                                             String hmacName,
                                             String clientNonce) {
+
+        if (listener == null) {
+            throw new NullPointerException("Parameter listener cannot be null");
+        }
+        if (sender == null) {
+            throw new NullPointerException("Parameter sender cannot be null");
+        }
+        if (ScramUtils.isNullOrEmpty(digestName)) {
+            throw new NullPointerException("digestName cannot be null or empty");
+        }
+        if (ScramUtils.isNullOrEmpty(hmacName)) {
+            throw new NullPointerException("hmacName cannot be null or empty");
+        }
+        if (ScramUtils.isNullOrEmpty(clientNonce)) {
+            throw new NullPointerException("clientNonce cannot be null or empty");
+        }
 
         mListener = listener;
         mSender = sender;
         mDigestName = digestName;
         mHmacName = hmacName;
         mClientNonce = clientNonce;
-    }
-
-
-    public AbstractScramSaslClientProcessor(Listener listener, Sender sender, String digestName, String hmacName) {
-        this(listener, sender, digestName, hmacName, UUID.randomUUID().toString());
     }
 
 
@@ -80,6 +118,41 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
                     break;
             }
         }
+    }
+
+
+    @Override
+    public synchronized void abort() {
+        mAborted = true;
+        mState = State.ENDED;
+    }
+
+
+    @Override
+    public synchronized boolean isEnded() {
+        return mState == State.ENDED;
+    }
+
+
+    @Override
+    public boolean isSuccess() {
+        return mIsSuccess;
+    }
+
+
+    @Override
+    public synchronized void start(String username, String password) throws StringPrep.StringPrepError {
+        mPassword = password;
+
+        mClientFirstMessageBare = "n=" + StringPrep.prepAsQueryString(username) + ",r=" + mClientNonce;
+        mState = State.CLIENT_FIRST_SENT;
+        mSender.sendMessage(GS2_HEADER + mClientFirstMessageBare);
+    }
+
+
+    @Override
+    public boolean isAborted() {
+        return mAborted;
     }
 
 
@@ -117,8 +190,8 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
         if (!parts[2].startsWith("i=")) {
             return null;
         }
-        String iterCountString = parts[2].substring(2);
-        int iterations = Integer.parseInt(iterCountString);
+        String iterationCountString = parts[2].substring(2);
+        int iterations = Integer.parseInt(iterationCountString);
         if (iterations <= 0) {
             return null;
         }
@@ -153,25 +226,6 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
     }
 
 
-    @Override
-    public synchronized void abort() {
-        mAborted = true;
-        mState = State.ENDED;
-    }
-
-
-    @Override
-    public synchronized boolean isEnded() {
-        return mState == State.ENDED;
-    }
-
-
-    @Override
-    public boolean isSuccess() {
-        return mIsSuccess;
-    }
-
-
     private void notifySuccess() {
         mListener.onSuccess();
     }
@@ -179,22 +233,6 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
 
     private void notifyFail() {
         mListener.onFailure();
-    }
-
-
-    @Override
-    public synchronized void start(String username, String password) throws StringPrep.StringPrepError {
-        mPassword = password;
-
-        mClientFirstMessageBare = "n=" + StringPrep.prepAsQueryString(username) + ",r=" + mClientNonce;
-        mState = State.CLIENT_FIRST_SENT;
-        mSender.sendMessage(GS2_HEADER + mClientFirstMessageBare);
-    }
-
-
-    @Override
-    public boolean isAborted() {
-        return mAborted;
     }
 
 

@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 
 /** Dynamically-loaded interface for java.text.Normalizer(NFKC); it's missing
  *  in non-bleeding-edge versions of Android and we can get by without it. */
+@SuppressWarnings({"SpellCheckingInspection", "JavaDoc"})
 class Normalizer {
     private static boolean initialized = false;
     private static Method normalize; // java.text.Normalizer.normalize
@@ -51,10 +52,11 @@ class Normalizer {
     }
 
 
+    @SuppressWarnings("SameParameterValue")
     private static void initialize(String classPath) {
         try {
             Class<?> normalizerClass = Class.forName(classPath);
-            Class<?> normalizerFormClass = findSubclassByName(normalizerClass, "Form");
+            Class<?> normalizerFormClass = findSubclassByName(normalizerClass);
             Object[] normalizerConstants = normalizerFormClass.getEnumConstants();
 
             nfkc = findObjectByValue(normalizerConstants, "NFKC");
@@ -65,12 +67,7 @@ class Normalizer {
     }
 
 
-    static abstract class Impl {
-        abstract String normalize(CharSequence seq);
-    }
-
-
-    private static Class<?> findSubclassByName(Class<?> parentClass, String name) throws ClassNotFoundException {
+    private static Class<?> findSubclassByName(Class<?> parentClass) throws ClassNotFoundException {
         Class<?>[] subClasses = parentClass.getClasses();
         String searchForName = parentClass.getName() + "$Form";
         for (Class<?> memberClass : subClasses) {
@@ -82,6 +79,7 @@ class Normalizer {
     }
 
 
+    @SuppressWarnings("SameParameterValue")
     private static Object findObjectByValue(Object[] objects, String s) throws ClassNotFoundException {
         for (Object e : objects) {
             if (e.toString().equals(s))

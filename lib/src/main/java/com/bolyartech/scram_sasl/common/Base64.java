@@ -66,6 +66,7 @@ package com.bolyartech.scram_sasl.common;
  * @author rob@iharder.net
  * @version 2.2.1
  */
+@SuppressWarnings({"WeakerAccess", "unused", "SpellCheckingInspection", "ConstantConditions", "JavaDoc"})
 public class Base64
 {
 
@@ -333,7 +334,7 @@ public class Base64
 	 * in which case one of them will be picked, though there is
 	 * no guarantee as to which one will be picked.
 	 */
-	private final static byte[] getAlphabet( int options )
+	private static byte[] getAlphabet( int options )
 	{
 		if( (options & URL_SAFE) == URL_SAFE ) return _URL_SAFE_ALPHABET;
 		else if( (options & ORDERED) == ORDERED ) return _ORDERED_ALPHABET;
@@ -349,7 +350,7 @@ public class Base64
 	 * in which case one of them will be picked, though there is
 	 * no guarantee as to which one will be picked.
 	 */
-	private final static byte[] getDecodabet( int options )
+	private static byte[] getDecodabet( int options )
 	{
 		if( (options & URL_SAFE) == URL_SAFE ) return _URL_SAFE_DECODABET;
 		else if( (options & ORDERED) == ORDERED ) return _ORDERED_DECODABET;
@@ -368,7 +369,8 @@ public class Base64
      * <strong>feel free to delete this method (in fact you probably should)
      * if you're embedding this code into a larger program.</strong>
      */
-    public final static void main( String[] args )
+    @SuppressWarnings("IfCanBeSwitch")
+    public static void main(String[] args )
     {
         if( args.length < 3 ){
             usage("Not enough arguments.");
@@ -394,7 +396,7 @@ public class Base64
      *
      * @param msg A message to include with usage info.
      */
-    private final static void usage( String msg )
+    private static void usage( String msg )
     {
         System.err.println( msg );
         System.err.println( "Usage: java Base64 -e|-d inputfile outputfile" );
@@ -449,6 +451,7 @@ public class Base64
      * @return the <var>destination</var> array
      * @since 1.3
      */
+    @SuppressWarnings("UnusedReturnValue")
     private static byte[] encode3to4(
      byte[] source, int srcOffset, int numSigBytes,
      byte[] destination, int destOffset, int options )
@@ -577,10 +580,10 @@ public class Base64
         }   // end catch
         finally
         {
-            try{ oos.close();   } catch( Exception e ){}
-            try{ gzos.close();  } catch( Exception e ){}
-            try{ b64os.close(); } catch( Exception e ){}
-            try{ baos.close();  } catch( Exception e ){}
+            try{ oos.close();   } catch( Exception ignored){}
+            try{ gzos.close();  } catch( Exception ignored){}
+            try{ b64os.close(); } catch( Exception ignored){}
+            try{ baos.close();  } catch( Exception ignored){}
         }   // end finally
 
         // Return value according to relevant encoding.
@@ -706,9 +709,9 @@ public class Base64
             }   // end catch
             finally
             {
-                try{ gzos.close();  } catch( Exception e ){}
-                try{ b64os.close(); } catch( Exception e ){}
-                try{ baos.close();  } catch( Exception e ){}
+                try{ gzos.close();  } catch( Exception ignored){}
+                try{ b64os.close(); } catch( Exception ignored){}
+                try{ baos.close();  } catch( Exception ignored){}
             }   // end finally
 
             // Return value according to relevant encoding.
@@ -879,7 +882,8 @@ public class Base64
      * @return decoded data
      * @since 1.3
      */
-    public static byte[] decode( byte[] source, int off, int len, int options )
+    @SuppressWarnings("UnusedAssignment")
+    public static byte[] decode(byte[] source, int off, int len, int options )
     {
 		byte[] DECODABET = getDecodabet( options );
 
@@ -953,7 +957,8 @@ public class Base64
      * @return the decoded data
      * @since 1.4
      */
-    public static byte[] decode( String s, int options )
+    @SuppressWarnings("UnusedAssignment")
+    public static byte[] decode(String s, int options )
     {
         byte[] bytes;
         try
@@ -1005,9 +1010,9 @@ public class Base64
                 }   // end catch
                 finally
                 {
-                    try{ baos.close(); } catch( Exception e ){}
-                    try{ gzis.close(); } catch( Exception e ){}
-                    try{ bais.close(); } catch( Exception e ){}
+                    try{ baos.close(); } catch( Exception ignored){}
+                    try{ gzis.close(); } catch( Exception ignored){}
+                    try{ bais.close(); } catch( Exception ignored){}
                 }   // end finally
 
             }   // end if: gzipped
@@ -1043,20 +1048,16 @@ public class Base64
 
             obj = ois.readObject();
         }   // end try
-        catch( java.io.IOException e )
+        catch( java.io.IOException | ClassNotFoundException e )
         {
             e.printStackTrace();
             obj = null;
         }   // end catch
-        catch( ClassNotFoundException e )
-        {
-            e.printStackTrace();
-            obj = null;
-        }   // end catch
+        // end catch
         finally
         {
-            try{ bais.close(); } catch( Exception e ){}
-            try{ ois.close();  } catch( Exception e ){}
+            try{ bais.close(); } catch( Exception ignored){}
+            try{ ois.close();  } catch( Exception ignored){}
         }   // end finally
 
         return obj;
@@ -1091,7 +1092,7 @@ public class Base64
         }   // end catch: IOException
         finally
         {
-            try{ bos.close(); } catch( Exception e ){}
+            try{ bos.close(); } catch( Exception ignored){}
         }   // end finally
 
         return success;
@@ -1124,7 +1125,7 @@ public class Base64
         }   // end catch: IOException
         finally
         {
-                try{ bos.close(); } catch( Exception e ){}
+                try{ bos.close(); } catch( Exception ignored){}
         }   // end finally
 
         return success;
@@ -1142,7 +1143,8 @@ public class Base64
      *
      * @since 2.1
      */
-    public static byte[] decodeFromFile( String filename )
+    @SuppressWarnings("UnusedAssignment")
+    public static byte[] decodeFromFile(String filename )
     {
         byte[] decodedData = null;
         Base64.InputStream bis = null;
@@ -1182,7 +1184,7 @@ public class Base64
         }   // end catch: IOException
         finally
         {
-            try{ bis.close(); } catch( Exception e) {}
+            try{ bis.close(); } catch( Exception ignored) {}
         }   // end finally
 
         return decodedData;
@@ -1199,7 +1201,8 @@ public class Base64
      *
      * @since 2.1
      */
-    public static String encodeFromFile( String filename )
+    @SuppressWarnings("UnusedAssignment")
+    public static String encodeFromFile(String filename )
     {
         String encodedData = null;
         Base64.InputStream bis = null;
@@ -1230,7 +1233,7 @@ public class Base64
         }   // end catch: IOException
         finally
         {
-            try{ bis.close(); } catch( Exception e) {}
+            try{ bis.close(); } catch( Exception ignored) {}
         }   // end finally
 
         return encodedData;
@@ -1257,7 +1260,7 @@ public class Base64
         }   // end catch
         finally {
             try { out.close(); }
-            catch( Exception ex ){}
+            catch( Exception ignored){}
         }   // end finally
     }   // end encodeFileToFile
 
@@ -1283,7 +1286,7 @@ public class Base64
         }   // end catch
         finally {
             try { out.close(); }
-            catch( Exception ex ){}
+            catch( Exception ignored){}
         }   // end finally
     }   // end decodeFileToFile
 
@@ -1300,6 +1303,7 @@ public class Base64
      * @see Base64
      * @since 1.3
      */
+    @SuppressWarnings({"CanBeFinal", "unused"})
     public static class InputStream extends java.io.FilterInputStream
     {
         private boolean encode;         // Encoding or decoding
@@ -1368,6 +1372,7 @@ public class Base64
          * @return next byte
          * @since 1.3
          */
+        @SuppressWarnings("UnusedAssignment")
         @Override
 		public int read() throws java.io.IOException
         {
@@ -1538,6 +1543,7 @@ public class Base64
      * @see Base64
      * @since 1.3
      */
+    @SuppressWarnings({"CanBeFinal", "unused", "JavaDoc"})
     public static class OutputStream extends java.io.FilterOutputStream
     {
         private boolean encode;

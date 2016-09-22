@@ -13,6 +13,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+/**
+ * Provides server side processing of the SCRAM SASL authentication
+ * Skeleton implementation of ScramSaslServerProcessor
+ */
+@SuppressWarnings({"WeakerAccess", "unused"})
 abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProcessor {
     private static final Pattern
             CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
@@ -24,6 +29,7 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
     private final Listener mListener;
     private final UserDataLoader mUserDataLoader;
     private final Sender mSender;
+    private final String mServerPartNonce;
 
     private State mState = State.INITIAL;
 
@@ -37,12 +43,44 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
     private UserData mUserData;
 
 
+    /**
+     * Creates new AbstractScramSaslServerProcessor
+     * @param connectionId ID of the client connection
+     * @param listener Listener
+     * @param userDataLoader loader for user data
+     * @param sender Sender used to send messages to the clients
+     * @param digestName Digest to be used
+     * @param hmacName HMAC to be used
+     */
     public AbstractScramSaslServerProcessor(final long connectionId,
                                             final Listener listener,
                                             final UserDataLoader userDataLoader,
                                             final Sender sender,
                                             final String digestName,
                                             final String hmacName) {
+
+        this(connectionId, listener, userDataLoader, sender, digestName, hmacName, UUID.randomUUID().toString());
+    }
+
+
+    /**
+     * Creates new AbstractScramSaslServerProcessor.
+     * Intended to be used in unit test (with a predefined serverPartNonce in order to have repeatability)
+     * @param connectionId ID of the client connection
+     * @param listener Listener
+     * @param userDataLoader loader for user data
+     * @param sender Sender used to send messages to the clients
+     * @param digestName Digest to be used
+     * @param hmacName HMAC to be used
+     * @param serverPartNonce In its first message server sends a nonce which contains the client nonce and server part nonce
+     */
+    AbstractScramSaslServerProcessor(final long connectionId,
+                                     final Listener listener,
+                                     final UserDataLoader userDataLoader,
+                                     final Sender sender,
+                                     final String digestName,
+                                     final String hmacName,
+                                     final String serverPartNonce) {
 
         if (listener == null) {
             throw new NullPointerException("listener cannot be null");
@@ -53,11 +91,14 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
         if (sender == null) {
             throw new NullPointerException("sender cannot be null");
         }
-        if (digestName == null) {
-            throw new NullPointerException("digestName cannot be null");
+        if (ScramUtils.isNullOrEmpty(digestName)) {
+            throw new NullPointerException("digestName cannot be null or empty");
         }
-        if (hmacName == null) {
-            throw new NullPointerException("hmacName cannot be null");
+        if (ScramUtils.isNullOrEmpty(hmacName)) {
+            throw new NullPointerException("hmacName cannot be null or empty");
+        }
+        if (ScramUtils.isNullOrEmpty(serverPartNonce)) {
+            throw new NullPointerException("serverPartNonce cannot be null or empty");
         }
 
         mConnectionId = connectionId;
@@ -66,6 +107,7 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
         mListener = listener;
         mUserDataLoader = userDataLoader;
         mSender = sender;
+        mServerPartNonce = serverPartNonce;
     }
 
 
@@ -126,6 +168,7 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
     }
 
 
+    @Override
     public synchronized String getAuthorizationID() {
         if (mState == State.ENDED && mIsSuccess) {
             return mUsername;
@@ -209,7 +252,7 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
         mClientFirstMessageBare = m.group(5);
         mUsername = m.group(6);
         String clientNonce = m.group(7);
-        mNonce = clientNonce + UUID.randomUUID().toString();
+        mNonce = clientNonce + mServerPartNonce;
 
         mUserDataLoader.loadUserData(mUsername, mConnectionId, this);
 
@@ -231,6 +274,6 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
         INITIAL,
         WAITING_FOR_USER_DATA,
         SERVER_FIRST_SENT,
-        ENDED;
+        ENDED
     }
 }

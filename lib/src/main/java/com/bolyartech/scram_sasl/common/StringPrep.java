@@ -24,10 +24,12 @@ import java.util.*;
  * <p>
  * StringPrep case folding is unimplemented, as it's not required by SASLPrep.
  */
+@SuppressWarnings({"WeakerAccess", "unused", "SpellCheckingInspection", "JavaDoc"})
 public class StringPrep {
     /**
      * A representation of sets of character classes.
      */
+    @SuppressWarnings({"SpellCheckingInspection", "JavaDoc"})
     static protected class CharClass {
         // Each character class is a set of [start,end] tuples; each tuple is represented
         // in the mapping as mapping[start] = (end-start+1).
@@ -39,12 +41,13 @@ public class StringPrep {
         //
         // TreeMap would work well for this, but it was missing basic operations like lowerEntry
         // until JDK1.6, which we don't want to depend on.
-        private final ArrayList<Integer> tupleStart = new ArrayList<Integer>();
-        private final ArrayList<Integer> tupleCount = new ArrayList<Integer>();
+        private final ArrayList<Integer> tupleStart = new ArrayList<>();
+        private final ArrayList<Integer> tupleCount = new ArrayList<>();
 
 
+        @SuppressWarnings("ForLoopReplaceableByForEach")
         static CharClass fromList(int[] charMap) {
-            SortedMap<Integer, Integer> mapping = new TreeMap<Integer, Integer>();
+            SortedMap<Integer, Integer> mapping = new TreeMap<>();
             for (int i = 0; i < charMap.length; ++i)
                 mapping.put(charMap[i], 1);
 
@@ -57,7 +60,7 @@ public class StringPrep {
             if ((charMap.length % 2) != 0)
                 throw new IllegalArgumentException("Invalid character list size");
 
-            SortedMap<Integer, Integer> mapping = new TreeMap<Integer, Integer>();
+            SortedMap<Integer, Integer> mapping = new TreeMap<>();
             for (int i = 0; i < charMap.length; i += 2) {
                 int start = charMap[i];
                 int end = charMap[i + 1];
@@ -70,7 +73,7 @@ public class StringPrep {
 
 
         static CharClass fromClasses(CharClass... classes) {
-            SortedMap<Integer, Integer> mapping = new TreeMap<Integer, Integer>();
+            SortedMap<Integer, Integer> mapping = new TreeMap<>();
             for (CharClass charClass : classes) {
                 for (int i = 0; i < charClass.tupleStart.size(); ++i) {
                     int start = charClass.tupleStart.get(i);
@@ -132,14 +135,10 @@ public class StringPrep {
             // tupleStart[pos] is <= c.
             int start = tupleStart.get(pos);
             int count = tupleCount.get(pos);
-            if (start <= c && c < start + count)
-                return true;
+            return start <= c && c < start + count;
 
-            return false;
         }
     }
-
-    ;
 
     /** A.1 Unassigned code points in Unicode 3.2 */
     static final CharClass A1 = CharClass.fromRanges(new int[]{
@@ -373,15 +372,15 @@ public class StringPrep {
     static final CharClass saslProhibited = CharClass.fromClasses(C12, C21, C22, C3, C4, C5, C6, C7, C8, C9);
 
     /** A prohibited string has been passed to StringPrep. */
+    @SuppressWarnings({"WeakerAccess", "JavaDoc"})
     static abstract public class StringPrepError extends Exception {
         protected StringPrepError(String message) {
             super(message);
         }
     }
 
-    ;
-
     /** A prohibited character was detected. */
+    @SuppressWarnings({"WeakerAccess", "JavaDoc"})
     static public class StringPrepProhibitedCharacter extends StringPrepError {
         StringPrepProhibitedCharacter() {
             super("String contains a prohibited character");
@@ -393,40 +392,30 @@ public class StringPrep {
         }
     }
 
-    ;
-
     /** A prohibited unassigned codepoint was detected. */
+    @SuppressWarnings("JavaDoc")
     static public class StringPrepUnassignedCodepoint extends StringPrepProhibitedCharacter {
         StringPrepUnassignedCodepoint() {
             super("String contains an unassigned codepoint");
         }
     }
 
-    ;
-
     /** RTL verification has failed, according to rfc3454 section 6. */
+    @SuppressWarnings({"unused", "JavaDoc"})
     static public class StringPrepRTLError extends StringPrepError {
         StringPrepRTLError() {
             super("Invalid RTL string");
         }
     }
 
-    ;
-
     static public class StringPrepRTLErrorBothRALandL extends StringPrepRTLError {
     }
-
-    ;
 
     static public class StringPrepRTLErrorRALWithoutPrefix extends StringPrepRTLError {
     }
 
-    ;
-
     static public class StringPrepRTLErrorRALWithoutSuffix extends StringPrepRTLError {
     }
-
-    ;
 
 
     /** Replace each character of {@code s} which is in the {@link CharClass} mapFrom
@@ -524,4 +513,4 @@ public class StringPrep {
 
         return s;
     }
-};
+}
