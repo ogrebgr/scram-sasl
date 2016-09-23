@@ -51,7 +51,8 @@ public class ScramSha256Example {
         ScramSaslServerProcessor.UserDataLoader loader = new ScramSaslServerProcessor.UserDataLoader() {
 
             @Override
-            public void loadUserData(String username, long connectionId, ScramSaslServerProcessor interested) {
+            public void loadUserData(String username, long connectionId, ScramSaslServerProcessor processor) {
+                // we fake the loading by simply generating new user data
                 SecureRandom random = new SecureRandom();
                 byte[] salt = new byte[24];
                 random.nextBytes(salt);
@@ -62,7 +63,8 @@ public class ScramSha256Example {
                             ScramUtils.newPassword("ogre1234", salt, 4096, "HmacSHA256", "SHA-256")
                     );
 
-                    interested.onUserDataLoaded(
+                    // we notify the processor
+                    processor.onUserDataLoaded(
                             new ScramSaslServerProcessor.UserData(data.salt,
                                     data.iterations,
                                     data.serverKey,
@@ -71,8 +73,6 @@ public class ScramSha256Example {
                 } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                     e.printStackTrace();
                 }
-
-
             }
         };
 
