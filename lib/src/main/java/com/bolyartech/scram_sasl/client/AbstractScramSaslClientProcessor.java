@@ -13,6 +13,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -21,6 +23,9 @@ import java.util.UUID;
  */
 @SuppressWarnings("WeakerAccess")
 abstract public class AbstractScramSaslClientProcessor implements ScramSaslClientProcessor {
+    private static final Pattern SERVER_FIRST_MESSAGE = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$");
+    private static final Pattern SERVER_FINAL_MESSAGE = Pattern.compile("v=([^,]*)$");
+
     private static final String GS2_HEADER = "n,,";
     private static final Charset ASCII = Charset.forName("ASCII");
 
@@ -157,40 +162,33 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
 
 
     private boolean handleServerFinal(String message) {
-        String[] parts = message.split(",");
-        if (!parts[0].startsWith("v=")) {
+        Matcher m = SERVER_FINAL_MESSAGE.matcher(message);
+        if (!m.matches()) {
             return false;
         }
-        byte[] serverSignature = Base64.decode(parts[0].substring(2));
+
+
+        byte[] serverSignature = Base64.decode(m.group(1));
 
         return Arrays.equals(serverSignature, serverSignature);
     }
 
 
     private String handleServerFirst(String message) throws SaslScramException {
-        String[] parts = message.split(",");
-        if (parts.length < 3) {
-            return null;
-        } else if (parts[0].startsWith("m=")) {
-            return null;
-        } else if (!parts[0].startsWith("r=")) {
+        Matcher m = SERVER_FIRST_MESSAGE.matcher(message);
+        if (!m.matches()) {
             return null;
         }
 
-        String nonce = parts[0].substring(2);
+        String nonce = m.group(1);
 
         if (!nonce.startsWith(mClientNonce)) {
             return null;
         }
 
-        if (!parts[1].startsWith("s=")) {
-            return null;
-        }
-        String salt = parts[1].substring(2);
-        if (!parts[2].startsWith("i=")) {
-            return null;
-        }
-        String iterationCountString = parts[2].substring(2);
+
+        String salt = m.group(2);
+        String iterationCountString = m.group(3);
         int iterations = Integer.parseInt(iterationCountString);
         if (iterations <= 0) {
             return null;
