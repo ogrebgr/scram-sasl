@@ -16,6 +16,9 @@ In short: SCRAM provides more security in (at least) two aspects:
 
 
 # How to use the library
+There are two ways to use the library:
+* High level usage - which is described bellow and provides classes that can be used as a base for your client or server (`Scram*SaslClientProcessor`, `Scram*SaslServerProcessor`)
+* Low level usage - you can use directly/manually the building blocks in order to create your own implementation of server/client (`ScramClientFunctionalityImpl`, `ScramServerFunctionalityImpl`).
 
 ## Server
 

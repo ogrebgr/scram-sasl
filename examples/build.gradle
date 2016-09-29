@@ -1,0 +1,14 @@
+group 'com.bolyartech.scram_sasl'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':scram_sasl')
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
