@@ -1,16 +1,9 @@
 package com.bolyartech.scram_sasl.server;
 
-import com.bolyartech.scram_sasl.common.Base64;
-import com.bolyartech.scram_sasl.common.SaslScramException;
+import com.bolyartech.scram_sasl.common.ScramException;
 import com.bolyartech.scram_sasl.common.ScramUtils;
 
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -19,28 +12,18 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProcessor {
-    private static final Pattern
-            CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
-            CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
 
     private final long mConnectionId;
-    private final String mDigestName;
-    private final String mHmacName;
     private final Listener mListener;
     private final UserDataLoader mUserDataLoader;
     private final Sender mSender;
-    private final String mServerPartNonce;
 
     private State mState = State.INITIAL;
 
     private volatile boolean mIsSuccess = false;
     private volatile boolean mAborted = false;
-
     private String mUsername;
-    private String mServerFirstMessage;
-    private String mClientFirstMessageBare;
-    private String mNonce;
-    private UserData mUserData;
+    private ScramServerFunctionality mScramServerFunctionality;
 
 
     /**
@@ -100,18 +83,16 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
         if (ScramUtils.isNullOrEmpty(serverPartNonce)) {
             throw new NullPointerException("serverPartNonce cannot be null or empty");
         }
+        mScramServerFunctionality = new ScramServerFunctionalityImpl(digestName, hmacName, serverPartNonce);
 
         mConnectionId = connectionId;
-        mDigestName = digestName;
-        mHmacName = hmacName;
         mListener = listener;
         mUserDataLoader = userDataLoader;
         mSender = sender;
-        mServerPartNonce = serverPartNonce;
     }
 
 
-    public synchronized void onMessage(String message) throws SaslScramException {
+    public synchronized void onMessage(String message) throws ScramException {
         if (mState != State.ENDED) {
             switch (mState) {
                 case INITIAL:
@@ -144,14 +125,9 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
 
     @Override
     public synchronized void onUserDataLoaded(UserData data) {
-        mUserData = data;
-        mServerFirstMessage = String.format("r=%s,s=%s,i=%d",
-                mNonce,
-                data.salt,
-                data.iterations);
-
+        String serverFirstMessage = mScramServerFunctionality.prepareFirstMessage(data);
         mState = State.SERVER_FIRST_SENT;
-        mSender.sendMessage(mConnectionId, mServerFirstMessage);
+        mSender.sendMessage(mConnectionId, serverFirstMessage);
     }
 
 
@@ -200,63 +176,28 @@ abstract class AbstractScramSaslServerProcessor implements ScramSaslServerProces
     }
 
 
-    private String handleClientFinal(String message) throws SaslScramException {
-        Matcher m = CLIENT_FINAL_MESSAGE.matcher(message);
-        if (!m.matches()) {
+    private String handleClientFinal(String message) throws ScramException {
+        mState = State.ENDED;
+        String finalMessage = mScramServerFunctionality.prepareFinalMessage(message);
+        if (finalMessage != null) {
+            mIsSuccess = true;
+            mState = State.ENDED;
+            return finalMessage;
+        } else {
             return null;
         }
-
-        String clientFinalMessageWithoutProof = m.group(1);
-        String clientNonce = m.group(3);
-        String proof = m.group(4);
-
-        if (!mNonce.equals(clientNonce)) {
-            return null;
-        }
-
-
-        String authMessage = mClientFirstMessageBare + "," + mServerFirstMessage + "," + clientFinalMessageWithoutProof;
-
-        byte[] storedKeyArr = Base64.decode(mUserData.storedKey);
-
-        try {
-            byte[] clientSignature = ScramUtils.computeHmac(storedKeyArr, mHmacName, authMessage);
-            byte[] serverSignature = ScramUtils.computeHmac(Base64.decode(mUserData.serverKey), mHmacName, authMessage);
-            byte[] clientKey = clientSignature.clone();
-            byte[] decodedProof = Base64.decode(proof);
-            for (int i = 0; i < clientKey.length; i++) {
-                clientKey[i] ^= decodedProof[i];
-            }
-
-            byte[] resultKey = MessageDigest.getInstance(mDigestName).digest(clientKey);
-            if (!Arrays.equals(storedKeyArr, resultKey)) {
-                return null;
-            }
-
-
-            return "v=" + Base64.encodeBytes(serverSignature);
-
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new SaslScramException(e);
-        }
-
     }
 
 
     private boolean handleClientFirst(String message) {
-        Matcher m = CLIENT_FIRST_MESSAGE.matcher(message);
-        if (!m.matches()) {
+        mUsername = mScramServerFunctionality.handleClientFirstMessage(message);
+
+        if (mUsername != null) {
+            mUserDataLoader.loadUserData(mUsername, mConnectionId, this);
+            return true;
+        } else {
             return false;
         }
-
-        mClientFirstMessageBare = m.group(5);
-        mUsername = m.group(6);
-        String clientNonce = m.group(7);
-        mNonce = clientNonce + mServerPartNonce;
-
-        mUserDataLoader.loadUserData(mUsername, mConnectionId, this);
-
-        return true;
     }
 
 

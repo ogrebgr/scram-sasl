@@ -2,11 +2,11 @@ package com.bolyartech.scram_sasl.examples;
 
 import com.bolyartech.scram_sasl.client.ScramSaslClientProcessor;
 import com.bolyartech.scram_sasl.client.ScramSha256SaslClientProcessor;
-import com.bolyartech.scram_sasl.common.SaslScramException;
+import com.bolyartech.scram_sasl.common.ScramException;
 import com.bolyartech.scram_sasl.common.ScramUtils;
-import com.bolyartech.scram_sasl.common.StringPrep;
 import com.bolyartech.scram_sasl.server.ScramSaslServerProcessor;
 import com.bolyartech.scram_sasl.server.ScramSha256SaslServerProcessor;
+import com.bolyartech.scram_sasl.server.UserData;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -48,8 +48,8 @@ public class ScramSha256Example {
         };
 
 
+        @SuppressWarnings("Convert2Lambda")
         ScramSaslServerProcessor.UserDataLoader loader = new ScramSaslServerProcessor.UserDataLoader() {
-
             @Override
             public void loadUserData(String username, long connectionId, ScramSaslServerProcessor processor) {
                 // we fake the loading by simply generating new user data
@@ -65,7 +65,7 @@ public class ScramSha256Example {
 
                     // we notify the processor
                     processor.onUserDataLoaded(
-                            new ScramSaslServerProcessor.UserData(data.salt,
+                            new UserData(data.salt,
                                     data.iterations,
                                     data.serverKey,
                                     data.storedKey));
@@ -87,8 +87,8 @@ public class ScramSha256Example {
 
         try {
             client.start("ogre", "ogre1234");
-        } catch (StringPrep.StringPrepError stringPrepError) {
-            stringPrepError.printStackTrace();
+        } catch (ScramException e) {
+            e.printStackTrace();
         }
 
     }
@@ -107,10 +107,9 @@ public class ScramSha256Example {
         public void sendMessage(long connectionId, String msg) {
             try {
                 client.onMessage(msg);
-            } catch (SaslScramException e) {
+            } catch (ScramException e) {
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -123,7 +122,7 @@ public class ScramSha256Example {
         public void sendMessage(String msg) {
             try {
                 mServer.onMessage(msg);
-            } catch (SaslScramException e) {
+            } catch (ScramException e) {
                 e.printStackTrace();
             }
         }

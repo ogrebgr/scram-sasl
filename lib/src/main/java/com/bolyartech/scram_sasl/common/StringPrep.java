@@ -513,4 +513,10 @@ public class StringPrep {
 
         return s;
     }
+
+
+    public static boolean isContainingProhibitedCharacters(String s) {
+        int idx = containsCharacterInClass(s, saslProhibited);
+        return idx != -1;
+    }
 }

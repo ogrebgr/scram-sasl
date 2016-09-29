@@ -1,7 +1,7 @@
 package com.bolyartech.scram_sasl.server;
 
 
-import com.bolyartech.scram_sasl.common.SaslScramException;
+import com.bolyartech.scram_sasl.common.ScramException;
 
 
 /**
@@ -12,9 +12,9 @@ public interface ScramSaslServerProcessor {
     /**
      * Called when there is message from the client
      * @param message Message
-     * @throws SaslScramException if there is a unrecoverable problem during processing
+     * @throws ScramException if there is a unrecoverable problem during processing
      */
-    void onMessage(String message) throws SaslScramException;
+    void onMessage(String message) throws ScramException;
 
     /**
      * Called when {@link UserData} is loaded by {@link UserDataLoader}
@@ -58,44 +58,6 @@ public interface ScramSaslServerProcessor {
      * @return Username of authorized user
      */
     String getAuthorizationID();
-
-    /**
-     * Wrapper for user data needed for the SCRAM authentication
-     */
-    @SuppressWarnings("unused")
-    class UserData {
-        /**
-         * Salt
-         */
-        public final String salt;
-        /**
-         * Iterations used to salt the password
-         */
-        public final int iterations;
-        /**
-         * Server key
-         */
-        public final String serverKey;
-        /**
-         * Stored key
-         */
-        public final String storedKey;
-
-
-        /**
-         * Creates new UserData
-         * @param salt Salt
-         * @param iterations Iterations for salting
-         * @param serverKey Server key
-         * @param storedKey Stored key
-         */
-        public UserData(String salt, int iterations, String serverKey, String storedKey) {
-            this.salt = salt;
-            this.iterations = iterations;
-            this.serverKey = serverKey;
-            this.storedKey = storedKey;
-        }
-    }
 
 
     /**

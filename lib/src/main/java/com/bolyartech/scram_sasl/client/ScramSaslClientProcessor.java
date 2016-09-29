@@ -1,8 +1,7 @@
 package com.bolyartech.scram_sasl.client;
 
 
-import com.bolyartech.scram_sasl.common.SaslScramException;
-import com.bolyartech.scram_sasl.common.StringPrep;
+import com.bolyartech.scram_sasl.common.ScramException;
 
 
 /**
@@ -14,16 +13,16 @@ public interface ScramSaslClientProcessor {
      * Initiates the SCRAM sequence by preparing and sending the first client message
      * @param username username of the user
      * @param password password of the user
-     * @throws StringPrep.StringPrepError if username contains forbidden characters (@see https://tools.ietf.org/html/rfc4013)
+     * @throws ScramException if username contains forbidden characters (@see https://tools.ietf.org/html/rfc4013)
      */
-    void start(String username, String password) throws StringPrep.StringPrepError;
+    void start(String username, String password) throws ScramException;
 
     /**
      * Called when message from server is received
      * @param message Message
-     * @throws SaslScramException if there is a unrecoverable error during internal processing of the message
+     * @throws ScramException if there is a unrecoverable error during internal processing of the message
      */
-    void onMessage(String message) throws SaslScramException;
+    void onMessage(String message) throws ScramException;
 
     /**
      * Aborts the procedure

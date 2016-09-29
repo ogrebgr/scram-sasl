@@ -3,10 +3,10 @@ package com.bolyartech.scram_sasl.examples;
 
 import com.bolyartech.scram_sasl.client.ScramSaslClientProcessor;
 import com.bolyartech.scram_sasl.client.ScramSha1SaslClientProcessor;
-import com.bolyartech.scram_sasl.common.SaslScramException;
-import com.bolyartech.scram_sasl.common.StringPrep;
+import com.bolyartech.scram_sasl.common.ScramException;
 import com.bolyartech.scram_sasl.server.ScramSaslServerProcessor;
 import com.bolyartech.scram_sasl.server.ScramSha1SaslServerProcessor;
+import com.bolyartech.scram_sasl.server.UserData;
 
 
 /**
@@ -43,13 +43,13 @@ public class ScramSha1Example {
         };
 
 
+        @SuppressWarnings("Convert2Lambda")
         ScramSaslServerProcessor.UserDataLoader loader = new ScramSaslServerProcessor.UserDataLoader() {
-
             @Override
             public void loadUserData(String username, long connectionId, ScramSaslServerProcessor interested) {
                 //noinspection SpellCheckingInspection
                 interested.onUserDataLoaded(
-                        new ScramSaslServerProcessor.UserData("TWLQ7cNG4uHZn38AlBSE7XacApO76SjN",
+                        new UserData("TWLQ7cNG4uHZn38AlBSE7XacApO76SjN",
                         4096,
                         "bEBbN+QCeFi1rtCQPn/15+mvuNg=",
                         "pxF02K1QQ/t5PcweqxjzZwPOolU="
@@ -68,8 +68,8 @@ public class ScramSha1Example {
 
         try {
             client.start("ogre", "ogre1234");
-        } catch (StringPrep.StringPrepError stringPrepError) {
-            stringPrepError.printStackTrace();
+        } catch (ScramException e) {
+            e.printStackTrace();
         }
 
     }
@@ -88,10 +88,9 @@ public class ScramSha1Example {
         public void sendMessage(long connectionId, String msg) {
             try {
                 client.onMessage(msg);
-            } catch (SaslScramException e) {
+            } catch (ScramException e) {
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -103,7 +102,7 @@ public class ScramSha1Example {
         public void sendMessage(String msg) {
             try {
                 mServer.onMessage(msg);
-            } catch (SaslScramException e) {
+            } catch (ScramException e) {
                 e.printStackTrace();
             }
         }

@@ -4,21 +4,21 @@ package com.bolyartech.scram_sasl.common;
  * Indicates error while processing SCRAM sequence
  */
 @SuppressWarnings("unused")
-public class SaslScramException extends Exception {
+public class ScramException extends Exception {
     /**
-     * Creates new SaslScramException
+     * Creates new ScramException
      * @param message Exception message
      */
-    public SaslScramException(String message) {
+    public ScramException(String message) {
         super(message);
     }
 
 
     /**
-     * Creates new SaslScramException
+     * Creates new ScramException
      * @param cause Throwable
      */
-    public SaslScramException(Throwable cause) {
+    public ScramException(Throwable cause) {
         super(cause);
     }
 }
