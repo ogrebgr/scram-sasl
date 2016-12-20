@@ -1,4 +1,21 @@
+/*
+ * Copyright 2016 Ognyan Bankov
+ * <p>
+ * All rights reserved. Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.bolyartech.scram_sasl.client;
+
 
 import com.bolyartech.scram_sasl.common.Base64;
 import com.bolyartech.scram_sasl.common.ScramException;
@@ -132,7 +149,8 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
                     mHmacName);
 
 
-            String clientFinalMessageWithoutProof = "c=" + Base64.encodeBytes(GS2_HEADER.getBytes(ASCII))
+            String clientFinalMessageWithoutProof = "c=" + Base64.encodeBytes(GS2_HEADER.getBytes(ASCII)
+                    , Base64.DONT_BREAK_LINES)
                     + ",r=" + nonce;
 
             String authMessage = mClientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
@@ -148,7 +166,7 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
             }
 
             mState = State.FINAL_PREPARED;
-            return clientFinalMessageWithoutProof + ",p=" + Base64.encodeBytes(clientProof);
+            return clientFinalMessageWithoutProof + ",p=" + Base64.encodeBytes(clientProof, Base64.DONT_BREAK_LINES);
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             mState = State.ENDED;
             throw new ScramException(e);

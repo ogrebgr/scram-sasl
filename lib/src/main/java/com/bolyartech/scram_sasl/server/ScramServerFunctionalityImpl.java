@@ -1,4 +1,22 @@
+/*
+ * Copyright 2016 Ognyan Bankov
+ * <p>
+ * All rights reserved. Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
 package com.bolyartech.scram_sasl.server;
+
 
 import com.bolyartech.scram_sasl.common.Base64;
 import com.bolyartech.scram_sasl.common.ScramException;
@@ -145,7 +163,7 @@ public class ScramServerFunctionalityImpl implements ScramServerFunctionality {
 
             mIsSuccessful = true;
             mState = State.ENDED;
-            return "v=" + Base64.encodeBytes(serverSignature);
+            return "v=" + Base64.encodeBytes(serverSignature, Base64.DONT_BREAK_LINES);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             mState = State.ENDED;
             throw new ScramException(e);
