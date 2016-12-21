@@ -168,6 +168,13 @@ Gradle
 
 `compile 'com.bolyartech.scram_sasl:scram_sasl:1.0.1'`
 
+Don't forget to include `jcenter` in your repos like:
+
+```
+repositories {
+    jcenter()
+}
+```
 
 # Credits
 Server implementation is based on [ScramSha1SaslServer](http://download.igniterealtime.org/openfire/docs/4.0.2/documentation/javadoc/org/jivesoftware/openfire/sasl/ScramSha1SaslServer.html) created by Richard Midwinter for the
