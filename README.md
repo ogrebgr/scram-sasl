@@ -164,8 +164,10 @@ You must take care on your own to interrupt the sequence with `abort()` after gi
 
 # Download
 
-There is no download as jar. Please get the source from github and embed it in your
-project as you see fit.
+Gradle
+
+compile 'com.bolyartech.scram_sasl:scram_sasl:1.0.1'
+
 
 # Credits
 Server implementation is based on [ScramSha1SaslServer](http://download.igniterealtime.org/openfire/docs/4.0.2/documentation/javadoc/org/jivesoftware/openfire/sasl/ScramSha1SaslServer.html) created by Richard Midwinter for the
