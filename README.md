@@ -166,7 +166,7 @@ You must take care on your own to interrupt the sequence with `abort()` after gi
 
 Gradle
 
-compile 'com.bolyartech.scram_sasl:scram_sasl:1.0.1'
+`compile 'com.bolyartech.scram_sasl:scram_sasl:1.0.1'`
 
 
 # Credits
