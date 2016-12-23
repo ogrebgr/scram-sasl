@@ -60,7 +60,7 @@ public class ScramSha256Example {
 
                 try {
                     ScramUtils.NewPasswordStringData data = ScramUtils.byteArrayToStringData(
-                            ScramUtils.newPassword("ogre1234", salt, 4096, "HmacSHA256", "SHA-256")
+                            ScramUtils.newPassword("ogre1234", salt, 4096, "SHA-256", "HmacSHA256")
                     );
 
                     // we notify the processor

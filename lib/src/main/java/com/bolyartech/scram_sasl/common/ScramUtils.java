@@ -143,10 +143,14 @@ public class ScramUtils {
     public static NewPasswordByteArrayData newPassword(String passwordClearText,
                                                        byte[] salt,
                                                        int iterations,
-                                                       String hmacName,
-                                                       String digestName)
+                                                       String digestName,
+                                                       String hmacName)
             throws NoSuchAlgorithmException, InvalidKeyException {
 
+        if (!hmacName.toLowerCase().startsWith("hmac")) {
+            throw new IllegalArgumentException("Invalid HMAC. Please check digestName and hmacName " +
+                    "to be in correct order");
+        }
 
         byte[] saltedPassword = ScramUtils.generateSaltedPassword(passwordClearText,
                 salt,
