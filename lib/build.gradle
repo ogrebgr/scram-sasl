@@ -1,5 +1,5 @@
 group 'com.bolyartech.scram_sasl'
-version '2.0.0'
+version '2.0.1'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
@@ -45,7 +45,7 @@ publishing {
             from components.java
             groupId 'com.bolyartech.scram_sasl'
             artifactId 'scram_sasl'
-            version '2.0.0'
+            version '2.0.1'
             artifact sourcesJar
         }
     }
@@ -63,9 +63,9 @@ bintray {
         issueTrackerUrl = 'https://github.com/ogrebgr/scram-sasl/issues'
         vcsUrl = 'git@github.com:ogrebgr/scram-sasl.git'
         version {
-            name = '2.0.0'
+            name = '2.0.1'
             desc = 'SCRAM SASL'
-            vcsTag = '2.0.0'
+            vcsTag = '2.0.1'
         }
     }
     publications = ['MyPublication']
