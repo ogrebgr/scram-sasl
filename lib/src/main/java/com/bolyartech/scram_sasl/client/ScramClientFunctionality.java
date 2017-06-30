@@ -47,7 +47,7 @@ public interface ScramClientFunctionality {
      * @param serverFinalMessage Server's final message
      * @return true if the server's message is valid, false otherwise
      */
-    boolean checkServerFinalMessage(String serverFinalMessage);
+    boolean checkServerFinalMessage(String serverFinalMessage) throws ScramException;
 
     /**
      * Checks if authentication is successful.

@@ -154,7 +154,7 @@ abstract public class AbstractScramSaslClientProcessor implements ScramSaslClien
     }
 
 
-    private boolean handleServerFinal(String message) {
+    private boolean handleServerFinal(String message) throws ScramException {
         return mScramClientFunctionality.checkServerFinalMessage(message);
     }
 

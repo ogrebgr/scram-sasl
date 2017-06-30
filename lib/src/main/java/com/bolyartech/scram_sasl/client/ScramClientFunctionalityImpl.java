@@ -49,6 +49,8 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
     private String mClientFirstMessageBare;
 
     private boolean mIsSuccessful = false;
+    private byte[] mSaltedPassword;
+    private String mAuthMessage;
 
     private State mState = State.INITIAL;
 
@@ -143,7 +145,7 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
 
 
         try {
-            byte[] saltedPassword = ScramUtils.generateSaltedPassword(password,
+            mSaltedPassword = ScramUtils.generateSaltedPassword(password,
                     Base64.decode(salt),
                     iterations,
                     mHmacName);
@@ -153,12 +155,12 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
                     , Base64.DONT_BREAK_LINES)
                     + ",r=" + nonce;
 
-            String authMessage = mClientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
+            mAuthMessage = mClientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
 
-            byte[] clientKey = ScramUtils.computeHmac(saltedPassword, mHmacName, "Client Key");
+            byte[] clientKey = ScramUtils.computeHmac(mSaltedPassword, mHmacName, "Client Key");
             byte[] storedKey = MessageDigest.getInstance(mDigestName).digest(clientKey);
 
-            byte[] clientSignature = ScramUtils.computeHmac(storedKey, mHmacName, authMessage);
+            byte[] clientSignature = ScramUtils.computeHmac(storedKey, mHmacName, mAuthMessage);
 
             byte[] clientProof = clientKey.clone();
             for (int i = 0; i < clientProof.length; i++) {
@@ -175,7 +177,7 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
 
 
     @Override
-    public boolean checkServerFinalMessage(String serverFinalMessage) {
+    public boolean checkServerFinalMessage(String serverFinalMessage) throws ScramException {
         if (mState != State.FINAL_PREPARED) {
             throw new IllegalStateException("You can call this method only once after " +
                     "calling prepareFinalMessage()");
@@ -190,7 +192,7 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
         byte[] serverSignature = Base64.decode(m.group(1));
 
         mState = State.ENDED;
-        mIsSuccessful = Arrays.equals(serverSignature, serverSignature);
+        mIsSuccessful = Arrays.equals(serverSignature, getExpectedServerSignature());
 
         return mIsSuccessful;
     }
@@ -216,5 +218,16 @@ public class ScramClientFunctionalityImpl implements ScramClientFunctionality {
     @Override
     public State getState() {
         return mState;
+    }
+
+
+    private byte[] getExpectedServerSignature() throws ScramException {
+        try {
+            byte[] serverKey = ScramUtils.computeHmac(mSaltedPassword, mHmacName, "Server Key");
+            return ScramUtils.computeHmac(serverKey, mHmacName, mAuthMessage);
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            mState = State.ENDED;
+            throw new ScramException(e);
+        }
     }
 }
