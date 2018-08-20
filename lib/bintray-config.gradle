@@ -1,1 +1,5 @@
-apply from: '/home/ogre/.signing/bintray-config.gradle'
+def fileBc = new File( '/home/ogre/.signing/bintray-config.gradle' )
+
+if (fileBc.exists()) {
+    apply from: '/home/ogre/.signing/bintray-config.gradle1'
+}
