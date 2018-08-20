@@ -65,7 +65,7 @@ bintray {
         version {
             name = '2.0.1'
             desc = 'SCRAM SASL'
-            vcsTag = '2.0.1'
+            vcsTag = 'v2.0.1'
         }
     }
     publications = ['MyPublication']
