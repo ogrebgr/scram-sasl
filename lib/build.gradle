@@ -1,12 +1,13 @@
 group 'com.bolyartech.scram_sasl'
 version '2.0.1'
 
-apply plugin: 'java'
+apply plugin: 'java-library'
+apply plugin: 'maven'
 apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
+apply plugin: 'signing'
 
-targetCompatibility = '1.7'
-sourceCompatibility = '1.7'
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
 
 
 repositories {
@@ -18,26 +19,32 @@ buildscript {
         jcenter()
         mavenCentral()
     }
-    dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
-    }
 }
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 
-// custom tasks for creating source/javadoc jars
-task sourcesJar(type: Jar, dependsOn: classes) {
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
 }
 
 artifacts {
-    archives sourcesJar//, javadocJar
+    archives javadocJar, sourcesJar
 }
 
-apply from: 'bintray-config.gradle'
+
+signing {
+    sign configurations.archives
+}
+
 
 publishing {
     publications {
@@ -51,24 +58,53 @@ publishing {
     }
 }
 
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-bintray {
-    configurations = ['archives']
-    pkg {
-        repo = 'maven'
-        name = 'scram-sasl'
-        userOrg = 'ogibankov'
-        licenses = ['Apache-2.0']
-        websiteUrl = 'https://github.com/ogrebgr/scram-sasl'
-        issueTrackerUrl = 'https://github.com/ogrebgr/scram-sasl/issues'
-        vcsUrl = 'git@github.com:ogrebgr/scram-sasl.git'
-        version {
-            name = '2.0.1'
-            desc = 'SCRAM SASL'
-            vcsTag = 'v2.0.1'
+            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'SCRAM SASL library for Java'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'SCRAM SASL authentication for Java'
+                url 'https://github.com/ogrebgr/scram-sasl'
+
+                scm {
+                    connection 'scm:git:https://github.com/ogrebgr/scram-sasl.git'
+                    developerConnection 'scm:git:https://github.com/ogrebgr/scram-sasl.git'
+                    url 'https://github.com/ogrebgr/scram-sasl'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'ogremir'
+                        name 'Ognyan Bankov'
+                        email 'bankov@bolyartech.com'
+                    }
+                }
+            }
         }
     }
-    publications = ['MyPublication']
 }
+
+
+archivesBaseName = "scram_sasl"
+
 
 
